@@ -1,86 +1,88 @@
 WatchProg V1.03-rc-023
-======================
 
-WatchProg — компактная программа для Windows, которая запускает выбранный файл
-и в реальном времени показывает его действия. Интерфейс на русском языке,
-оформлен стандартными средствами Win32 и следует системной теме Windows.
+WatchProg is a compact Windows application that launches a selected file and monitors its activity in real time. The interface is available in Russian, uses standard Win32 controls, and follows the system Windows theme.
 
-Что показывается
-----------------
-— файлы и папки: создание, изменение, удаление, переименование и перемещение;
-— реестр: создание и удаление разделов, изменение и удаление параметров;
-— планировщик заданий: создание, изменение, удаление, отключение и запуск задач;
-— процессы: запуск и завершение, включая дочерние процессы;
-— сеть: TCP/UDP-подключения, передача и приём данных, DNS-запросы и адреса.
+Monitored Activity
 
-Для каждого события отображаются локальное время с точностью до секунды,
-категория, действие, объект и подробности (включая процесс и PID, если он
-доступен). Сетевые записи содержат ссылку вида http:// или https:// либо
-адрес узла и порт.
+- Files and directories: creation, modification, deletion, renaming, and moving.
+- Registry: key creation and deletion, value modification and deletion.
+- Task Scheduler: task creation, modification, deletion, disabling, and execution.
+- Processes: process creation and termination, including child processes.
+- Network: TCP/UDP connections, data transmission and reception, DNS requests, and addresses.
 
-Поддерживаемые файлы
---------------------
-.exe .msi .appx .appinstaller .msix .msixbundle .appxbundle .com .bat .vbs
-.ps1 .dll .vbe .cmd .cpl .msc .scr
+Each event displays the local time (with one-second precision), category, action, object, and additional details (including the process name and PID, when available).
 
-Для DLL запускается отдельный процесс-загрузчик: библиотека загружается,
-выполняется её DllMain, затем процесс завершается. Для MSI используется
-msiexec, для APPX/MSIX — Add-AppxPackage, для сценариев — соответствующие
-системные обработчики.
+Network entries contain an "http://" or "https://" link, or a hostname and port.
 
-Важно
------
-1. WatchProg фактически запускает выбранный файл. Используйте только файлы,
-   которым доверяете, или запускайте анализ в виртуальной машине.
-2. Для системной трассировки ETW нужны права администратора. Сам интерфейс
-   работает без повышенных прав, поэтому в него можно перетаскивать файлы из
-   Проводника. При первом анализе Windows покажет запрос UAC: разрешите запуск
-   службы наблюдения WatchProg. Целевой файл также будет запущен с этими
-   правами.
-3. Один экземпляр системного журнала ETW может быть занят другим средством
-   (Windows Performance Recorder, Process Monitor и т. п.). В этом случае
-   закройте другое средство и повторите анализ.
-4. Некоторые действия системных служб (например, установщика MSI или AppX)
-   могут выполняться в отдельных процессах. WatchProg подключает к наблюдению
-   соответствующие системные службы, но может показать и фоновые события этих
-   служб.
-5. Журнал можно отфильтровать в меню «Вид» и сохранить в TXT или CSV.
-6. Если на компьютере установлена платформа внедряемых модификаций Windhawk,
-   её служебные файлы в ProgramData\Windhawk\Engine и Program Files\Windhawk\Engine
-   не включаются в журнал: это не действия выбранной программы. Вспомогательный
-   процесс conhost.exe также не отслеживается, иначе загрузка системных DLL
-   консолью переполняла бы журнал.
-7. При первом перетаскивании запускается отдельная служба наблюдения WatchProg.
-   Это единственный запрос UAC; до закрытия программы служба переиспользуется.
+Supported File Types
 
-Управление
-----------
-Перетаскивание файла в окно — начать анализ.
-Кнопка «Остановить» — прекратить сбор событий; запущенная программа при этом
-не завершается.
-«Запустить снова» — новый запуск выбранного файла после остановки.
-Ctrl+O — открыть файл, Ctrl+L — очистить журнал, Ctrl+S — сохранить журнал,
-F5 — запустить снова, Esc — остановить наблюдение.
+".exe" ".msi" ".appx" ".appinstaller" ".msix" ".msixbundle" ".appxbundle" ".com" ".bat" ".vbs" ".ps1" ".dll" ".vbe" ".cmd" ".cpl" ".msc" ".scr"
 
-Окно имеет фиксированный размер 1200x900 (с учётом DPI) и не растягивается.
-В левом нижнем углу отображается версия WatchProg V1.03-rc-023.
+- DLL: A separate loader process is created. The library is loaded, its "DllMain" is executed, and the process is then terminated.
+- MSI: Launched using "msiexec".
+- APPX/MSIX: Installed using "Add-AppxPackage".
+- Scripts: Executed using their corresponding system handlers.
 
-Сборка
-------
-Требуется Windows 10/11 x64 и MSYS2 UCRT64 с GCC и windres.
-Запустите build.bat в папке проекта. CMake и сторонние библиотеки не нужны.
-Результат: WatchProg.exe рядом с build.bat.
+Important Notes
 
-Исходные файлы
---------------
-src/main.cpp         — точка входа, режимы агента и загрузчика DLL
-src/ui.cpp           — главное окно, меню, журнал, drag&drop
-src/theme.cpp        — системная тема, шрифты, цвета
-src/monitor.cpp      — ETW-наблюдение, процессы, файлы, реестр, сеть, задачи
-src/etw.cpp          — запуск сеансов ETW и декодирование событий
-src/agent.cpp        — привилегированная служба наблюдения и протокол
-src/agent_client.cpp — запуск службы и связь через именованный канал
-src/launcher.cpp     — подготовка и запуск файлов
-src/util.cpp         — служебные функции
-src/report.cpp       — сохранение журнала
-resources/           — манифест, иконка, ресурсы
+1. WatchProg actually launches the selected file. Only use files you trust, or perform analysis inside a virtual machine.
+
+2. Administrator privileges are required for system-level ETW tracing. The main interface runs without elevated privileges, allowing files to be dragged and dropped directly from File Explorer. During the first analysis, Windows displays a UAC prompt requesting permission to start the WatchProg monitoring service. The target file will also be launched with these elevated privileges.
+
+3. An ETW session may already be occupied by another application (such as Windows Performance Recorder or Process Monitor). If this happens, close the other application and try again.
+
+4. Some actions performed by system services (for example, the MSI or AppX installer) may execute in separate processes. WatchProg attaches monitoring to the corresponding system services, but background events generated by those services may also appear in the log.
+
+5. The log can be filtered through the View menu and exported to TXT or CSV.
+
+6. If the Windhawk modification platform is installed, its service files in "ProgramData\Windhawk\Engine" and "Program Files\Windhawk\Engine" are excluded from the log, as they are not actions performed by the selected application. The auxiliary "conhost.exe" process is also excluded to prevent system DLL loading by the console from overwhelming the log.
+
+7. On the first file drop, a separate WatchProg monitoring service is started. This is the only UAC prompt required; the service is reused until WatchProg is closed.
+
+Controls
+
+Action| Description
+Drag and drop a file into the window| Start monitoring
+Stop| Stop collecting events (the launched application is not terminated)
+Run Again| Launch the selected file again after monitoring has stopped
+"Ctrl+O"| Open a file
+"Ctrl+L"| Clear the log
+"Ctrl+S"| Save the log
+"F5"| Run again
+"Esc"| Stop monitoring
+
+The window has a fixed size of 1200 × 900 (DPI-aware) and cannot be resized.
+
+The current version, WatchProg V1.03-rc-023, is displayed in the bottom-left corner.
+
+Building
+
+Requirements
+
+- Windows 10/11 x64
+- MSYS2 UCRT64
+- GCC
+- windres
+
+Build Instructions
+
+Run "build.bat" from the project directory.
+
+CMake and third-party libraries are not required.
+
+Output: "WatchProg.exe" in the same directory as "build.bat".
+
+Source Files
+
+File| Description
+"src/main.cpp"| Entry point, agent and DLL loader modes
+"src/ui.cpp"| Main window, menus, event log, drag and drop
+"src/theme.cpp"| System theme, fonts, and colors
+"src/monitor.cpp"| ETW monitoring, processes, files, registry, network, and tasks
+"src/etw.cpp"| ETW session management and event decoding
+"src/agent.cpp"| Privileged monitoring service and communication protocol
+"src/agent_client.cpp"| Service startup and named pipe communication
+"src/launcher.cpp"| File preparation and launching
+"src/util.cpp"| Utility functions
+"src/report.cpp"| Event log export
+"resources/"| Manifest, icon, and other resources
